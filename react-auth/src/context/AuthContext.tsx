@@ -1,76 +1,73 @@
-// Import React and necessary hooks for managing state and context
+// Import React and required hooks
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-// Import Firebase authentication utilities and types
-import type { User, UserCredential } from 'firebase/auth';
+import type { User, UserCredential } from "firebase/auth";
 
+// Import Firebase authentication methods and types
 import {
-  createUserWithEmailAndPassword, // Firebase function to create user
-  signInWithEmailAndPassword, // Firebase function to log in user
-  signOut as firebaseSignOut, // Firebase function to log out user
-  onAuthStateChanged, // Listener for changes in authentication state
+  createUserWithEmailAndPassword, // Function to create a new user
+  signInWithEmailAndPassword, // Function to sign in existing users
+  signOut as firebaseSignOut, // Function to sign out
+  onAuthStateChanged, // Observer for auth state changes
 } from 'firebase/auth';
 
-// Import the configured Firebase auth instance
+// Import configured Firebase auth instance
 import { auth } from '../firebase/config';
 
-// Import message component from Ant Design for showing notifications
+// Import Ant Design message component for success/error notifications
 import { message } from 'antd';
+
+// --- INTERFACE DEFINITIONS ---
 
 // Define the shape of the authentication context
 interface AuthContextType {
   currentUser: User | null; // Currently authenticated user
-  loading: boolean; // Loading state for async operations
-  signUp: (email: string, password: string) => Promise<UserCredential>; // Function to sign up
-  signIn: (email: string, password: string) => Promise<UserCredential>; // Function to sign in
+  loading: boolean; // Loading state for auth initialization
+  signUp: (email: string, password: string) => Promise<UserCredential>; // Function to register user
+  signIn: (email: string, password: string) => Promise<UserCredential>; // Function to login user
+  signOut: () => Promise<void>; // Function to log out user
 }
 
-// Create a new context for authentication, initially undefined
+// Create the authentication context (initially undefined)
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Custom hook for using the AuthContext safely
+// --- CUSTOM HOOK: useAuth ---
+// Helper hook to easily access authentication context from any component
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  // Throw error if used outside of AuthProvider
+  const context = useContext(AuthContext); // Retrieve context
   if (context === undefined) {
+    // Ensure hook is used within a provider
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
 };
 
-// Define props for AuthProvider component
+// --- PROVIDER COMPONENT PROPS INTERFACE ---
 interface AuthProviderProps {
-  children: React.ReactNode; // React children (nested components)
+  children: React.ReactNode; // Child components that will use the context
 }
 
-// Main AuthProvider component to wrap around the app
+// --- AUTH PROVIDER COMPONENT ---
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // State for the currently signed-in user
+  // State to store the currently authenticated user
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // State for tracking loading status (useful during initialization)
+  // State to track whether Firebase is initializing/loading
   const [loading, setLoading] = useState(true);
 
-  // --------------------------
-  // 🔹 SIGN UP FUNCTION
-  // --------------------------
+  // --- SIGN UP FUNCTION ---
   const signUp = async (email: string, password: string): Promise<UserCredential> => {
     try {
-      // Create a new user with Firebase Auth
+      // Create user account in Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Get the user's token (for secure session storage)
-      const token = await userCredential.user.getIdToken();
 
-      // Store authentication token and user ID in localStorage
+      // Retrieve user token and store in localStorage
+      const token = await userCredential.user.getIdToken();
       localStorage.setItem('authToken', token);
       localStorage.setItem('userId', userCredential.user.uid);
 
-      // Show success message to user
+      // Notify success
       message.success('Account created successfully!');
-      
       return userCredential;
     } catch (error: any) {
       // Handle signup errors gracefully
@@ -79,59 +76,87 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // --------------------------
-  // 🔹 SIGN IN FUNCTION
-  // --------------------------
+  // --- SIGN IN FUNCTION ---
   const signIn = async (email: string, password: string): Promise<UserCredential> => {
     try {
-      // Attempt to sign in with Firebase Auth
+      // Sign in user using Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Retrieve token and store it for authenticated API calls
+
+      // Retrieve token and persist in localStorage
       const token = await userCredential.user.getIdToken();
       localStorage.setItem('authToken', token);
       localStorage.setItem('userId', userCredential.user.uid);
 
-      // Display success message
+      // Show success message
       message.success('Signed in successfully!');
-      
       return userCredential;
     } catch (error: any) {
-      // Handle sign-in errors gracefully
+      // Handle sign-in errors
       message.error(error.message || 'Failed to sign in');
       throw error;
     }
   };
 
-  // --------------------------
-  // 🔹 AUTH STATE LISTENER (optional but recommended)
-  // --------------------------
-  useEffect(() => {
-    // Listen for authentication state changes (login/logout)
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user); // Update current user
-      setLoading(false); // Set loading to false once user state is known
-    });
+  // --- SIGN OUT FUNCTION ---
+  const signOut = async (): Promise<void> => {
+    try {
+      // Sign out the current user
+      await firebaseSignOut(auth);
 
-    // Clean up the listener when component unmounts
-    return () => unsubscribe();
-  }, []);
+      // Clear stored authentication data
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
 
-  // --------------------------
-  // 🔹 CONTEXT VALUE
-  // --------------------------
-  const value: AuthContextType = {
-    currentUser, // Authenticated user object
-    loading, // Loading state
-    signUp, // Signup function
-    signIn, // Signin function
+      // Notify user of successful sign-out
+      message.success('Signed out successfully!');
+    } catch (error: any) {
+      // Handle sign-out errors
+      message.error(error.message || 'Failed to sign out');
+      throw error;
+    }
   };
 
-  // --------------------------
-  // 🔹 PROVIDER RETURN
-  // --------------------------
+  // --- AUTH STATE LISTENER ---
+  useEffect(() => {
+    // Subscribe to Firebase authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user); // Update user state
+
+      if (user) {
+        // If user is signed in, fetch and store token
+        try {
+          const token = await user.getIdToken();
+          localStorage.setItem('authToken', token);
+          localStorage.setItem('userId', user.uid);
+        } catch (error) {
+          console.error('Error getting user token:', error);
+        }
+      } else {
+        // If user signs out, clear localStorage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+      }
+
+      // Set loading to false once initialization completes
+      setLoading(false);
+    });
+
+    // Cleanup: unsubscribe from listener on unmount
+    return unsubscribe;
+  }, []);
+
+  // --- CONTEXT VALUE OBJECT ---
+  const value: AuthContextType = {
+    currentUser, // Authenticated user
+    loading, // Initialization/loading flag
+    signUp, // Sign-up method
+    signIn, // Sign-in method
+    signOut // Sign-out method
+  };
+
+  // --- PROVIDER RETURN ---
   return (
-    // Provide auth-related values and functions to all child components
+    // Make authentication context available to child components
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>

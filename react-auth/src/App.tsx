@@ -1,10 +1,10 @@
-// Import React library
+// Import React for defining components
 import React from 'react';
 
-// Import React Router components for navigation and route setup
+// Import React Router components for routing and navigation
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Import Ant Design's ConfigProvider to apply global UI theme settings
+// Import Ant Design’s ConfigProvider for theme customization
 import { ConfigProvider } from 'antd';
 
 // Import custom authentication context provider and hook
@@ -12,66 +12,54 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Import page components
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import Dashboard from './pages/Dashboard';
 
-// --------------------------------------------
-// 🔹 RootRedirect Component
-// --------------------------------------------
-// Handles redirection when user visits the root route ("/")
-// Automatically sends logged-in users to /dashboard and others to /login
+// --- ROOT REDIRECT COMPONENT ---
+// This component handles redirecting users from the root ("/") route
+// to either the Dashboard (if authenticated) or Login (if not)
 const RootRedirect: React.FC = () => {
-  // Access current user and loading state from AuthContext
-  const { currentUser, loading } = useAuth();
-
-  // While checking authentication state, show loading indicator
+  const { currentUser, loading } = useAuth(); // Access auth state and loading flag
+  
+  // Display a temporary loading message while Firebase initializes
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  // If user is logged in, redirect to dashboard
-  // If not, redirect to login page
-  return currentUser ? (
-    <Navigate to="/dashboard" replace />
-  ) : (
-    <Navigate to="/login" replace />
-  );
+  // Redirect based on authentication status
+  // Authenticated users → Dashboard
+  // Unauthenticated users → Login
+  return currentUser ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 };
 
-// --------------------------------------------
-// 🔹 Main App Component
-// --------------------------------------------
-// Wraps entire app with Ant Design theme, Auth provider, and router
+// --- MAIN APPLICATION COMPONENT ---
 const App = () => (
-  // Configure Ant Design global theme (colors, borders, etc.)
+  // Global theme configuration for Ant Design components
   <ConfigProvider
     theme={{
       token: {
-        colorPrimary: '#667eea', // Custom brand color (used in buttons, links, etc.)
-        borderRadius: 8, // Global default border radius
+        colorPrimary: '#667eea', // Primary theme color (purple-blue gradient tone)
+        borderRadius: 8, // Default border radius for UI elements
       },
     }}
   >
-    {/* Provide authentication context to the whole app */}
+    {/* Authentication provider wrapping the entire app */}
+    {/* This ensures all routes have access to auth state and methods */}
     <AuthProvider>
-      {/* Setup React Router for client-side routing */}
+      {/* BrowserRouter enables client-side routing */}
       <BrowserRouter>
         <Routes>
-          {/* Root route — automatically redirects based on login state */}
+          {/* --- ROOT REDIRECT ROUTE --- */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Public routes */}
+          {/* --- AUTHENTICATION ROUTES --- */}
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/dashboard" element={<Dashboard />} />
 
-          {/* Protected route placeholder — replace with real dashboard component later */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <>DashBoard</> // Temporary placeholder for dashboard content
-            } 
-          />
-
-          {/* Catch-all route for undefined paths (shows 404 page) */}
-          {/* ⚠️ Always keep this route last */}
+          {/* --- CATCH-ALL 404 ROUTE --- */}
+          {/* This route will match any unknown path and show the NotFound page */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
@@ -79,5 +67,5 @@ const App = () => (
   </ConfigProvider>
 );
 
-// Export App as the default component
+// Export the App component as the default export
 export default App;

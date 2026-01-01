@@ -1,81 +1,83 @@
-// Import React for component creation
-import React from 'react'
+// Import React library
+import React from 'react';
 
-// Import router utilities for navigation and route configuration
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+// Import React Router components for navigation and route setup
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Import Ant Design's ConfigProvider for global theming
-import { ConfigProvider, Spin } from 'antd'
+// Import Ant Design's ConfigProvider to apply global UI theme settings
+import { ConfigProvider } from 'antd';
 
-// Import the AuthProvider (context) and useAuth hook to manage authentication state
-import { AuthProvider, useAuth } from "./context/AuthContext"
+// Import custom authentication context provider and hook
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
-import NotFound from "./pages/NotFound"
-import Login from './pages/Login'
+// Import page components
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 
-// ===============================
-// RootRedirect Component
-// ===============================
-
-// Handles redirecting users based on authentication state
+// --------------------------------------------
+// 🔹 RootRedirect Component
+// --------------------------------------------
+// Handles redirection when user visits the root route ("/")
+// Automatically sends logged-in users to /dashboard and others to /login
 const RootRedirect: React.FC = () => {
-  // Access currentUser and loading state from authentication context
-  const { currentUser, loading } = useAuth()
+  // Access current user and loading state from AuthContext
+  const { currentUser, loading } = useAuth();
 
-  // If auth state is still loading, display a temporary loading screen
+  // While checking authentication state, show loading indicator
   if (loading) {
-    return <div style={{
-      display:'flex',
-      alignItems:'center',
-      justifyContent:'center',
-      width:'100%',
-      height:'100vh'
-    }}><Spin/></div>
+    return <div>Loading...</div>;
   }
 
-  // Once loading finishes:
-  // - If the user is logged in, redirect to the dashboard
-  // - If not logged in, redirect to the login page
-  return currentUser
-    ? <Navigate to="/dashboard" replace />
-    : <Navigate to="/login" replace />
-}
+  // If user is logged in, redirect to dashboard
+  // If not, redirect to login page
+  return currentUser ? (
+    <Navigate to="/dashboard" replace />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+};
 
-// ===============================
-// App Component
-// ===============================
-
-// Main app component that wraps everything inside providers and routers
+// --------------------------------------------
+// 🔹 Main App Component
+// --------------------------------------------
+// Wraps entire app with Ant Design theme, Auth provider, and router
 const App = () => (
-  // Ant Design ConfigProvider allows global theme customization
+  // Configure Ant Design global theme (colors, borders, etc.)
   <ConfigProvider
     theme={{
       token: {
-        colorPrimary: '#667eea', // Sets the main brand color (purple-blue)
-        borderRadius: 8,         // Global border radius for buttons, cards, etc.
+        colorPrimary: '#667eea', // Custom brand color (used in buttons, links, etc.)
+        borderRadius: 8, // Global default border radius
       },
     }}
   >
-    {/* AuthProvider gives access to auth context across the app */}
+    {/* Provide authentication context to the whole app */}
     <AuthProvider>
-      {/* BrowserRouter handles client-side routing */}
+      {/* Setup React Router for client-side routing */}
       <BrowserRouter>
-        {/* Routes define which component renders for each URL path */}
         <Routes>
-          {/* Root route redirects depending on login state */}
+          {/* Root route — automatically redirects based on login state */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Authentication routes */}
-          <Route path="/login" element={<Login/>} />
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
 
-          {/* Catch-all route for undefined paths → renders 404 page */}
-          {/* Add new routes ABOVE this line to avoid overriding */}
+          {/* Protected route placeholder — replace with real dashboard component later */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <>DashBoard</> // Temporary placeholder for dashboard content
+            } 
+          />
+
+          {/* Catch-all route for undefined paths (shows 404 page) */}
+          {/* ⚠️ Always keep this route last */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   </ConfigProvider>
-)
+);
 
-// Export the App component as default
-export default App
+// Export App as the default component
+export default App;

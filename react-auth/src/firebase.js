@@ -9,6 +9,7 @@ const STORAGE_BUCKET = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
 const MESSAGING_SENDER_ID = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
 const APP_ID = import.meta.env.VITE_FIREBASE_APP_ID;
 const MEASUREMENT_ID = import.meta.env.VITE_MEASUREMENT_ID;
+const RECAPTCHA_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -22,7 +23,8 @@ const firebaseConfig = {
   storageBucket: STORAGE_BUCKET,
   messagingSenderId: MESSAGING_SENDER_ID,
   appId: APP_ID,
-  measurementId: MEASUREMENT_ID
+  measurementId: MEASUREMENT_ID,
+  recaptchaKey: RECAPTCHA_KEY,
 };
 
 // Initialize Firebase

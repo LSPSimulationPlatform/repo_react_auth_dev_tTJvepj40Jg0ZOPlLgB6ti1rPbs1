@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 
 // Import custom hook that manages signup logic (form state, validation, submission)
 import { useAuthForm } from '@/hooks/SignUp/useAuthForm';
+import ReCaptcha from '../ReCaptcha'
 
 // Extract Text component from Typography for better readability
 const { Text } = Typography;
@@ -20,7 +21,7 @@ const { Text } = Typography;
 const SignUpForm: React.FC = () => {
   // Use custom authentication hook for signup functionality
   // Provides form instance, loading state, and onFinish submit handler
-  const { form, loading, onFinish } = useAuthForm('signup');
+  const { form, loading, onFinish, setCaptchaToken } = useAuthForm('signup');
 
   return (
     <>
@@ -94,6 +95,10 @@ const SignUpForm: React.FC = () => {
             placeholder="Confirm your password" // Placeholder text
             style={{ borderRadius: '8px' }} // Rounded corners
           />
+        </Form.Item>
+
+        <Form.Item style={{ marginTop: 16 }}>
+          <ReCaptcha onChange={setCaptchaToken} />
         </Form.Item>
 
         {/* --- SUBMIT BUTTON --- */}

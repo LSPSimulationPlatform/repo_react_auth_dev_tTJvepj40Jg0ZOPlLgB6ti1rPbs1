@@ -21,7 +21,7 @@ import { message } from 'antd';
 interface AuthContextType {
   currentUser: User | null; // Current authenticated user (null if none)
   loading: boolean; // Loading state for auth operations
-  signUp: (email: string, password: string) => Promise<UserCredential>; // Function to register new user
+  signUp: (email: string, password: string, captchaToken: string | null) => Promise<UserCredential>; // Function to register new user
   signIn: (email: string, password: string) => Promise<UserCredential>; // Function to log in existing user
   signOut: () => Promise<void>; // Function to log out user
 }
@@ -54,7 +54,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // --- SIGN UP FUNCTION ---
-  const signUp = async (email: string, password: string): Promise<UserCredential> => {
+  const signUp = async (email: string, password: string, captchaToken:string | null): Promise<UserCredential> => {
+    if (!captchaToken) {
+      message.error("Please verify reCAPTCHA");
+      throw new Error("reCAPTCHA verification required");
+    }
+    
     try {
       // Create a new user with Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);

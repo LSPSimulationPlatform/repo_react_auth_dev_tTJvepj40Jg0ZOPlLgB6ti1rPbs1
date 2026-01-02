@@ -17,6 +17,7 @@ interface AuthFormValues {
   email: string; // User's email address
   password: string; // User's password
   confirmPassword?: string; // Optional field for password confirmation (used in signup)
+  captchaToken?: string;
 }
 
 // Define the authentication mode: either "login" or "signup"
@@ -30,6 +31,8 @@ export const useAuthForm = (mode: Mode) => {
 
   // Manage loading state during async operations
   const [loading, setLoading] = useState(false);
+
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // Destructure authentication methods from context
   const { signIn, signUp } = useAuth();
@@ -56,8 +59,11 @@ export const useAuthForm = (mode: Mode) => {
         // Redirect user to previous page or dashboard
         navigate(from, { replace: true });
       } else {
+        if (!captchaToken) {
+          throw new Error("reCAPTCHA not verified");
+        }
         // If in signup mode, create a new user account
-        await signUp(values.email, values.password);
+        await signUp(values.email, values.password, captchaToken);
 
         // Redirect new users directly to dashboard
         navigate('/dashboard');
@@ -72,5 +78,5 @@ export const useAuthForm = (mode: Mode) => {
   };
 
   // Return useful variables and handlers to be used by form components
-  return { form, loading, onFinish };
+  return { form, loading, onFinish, setCaptchaToken };
 };

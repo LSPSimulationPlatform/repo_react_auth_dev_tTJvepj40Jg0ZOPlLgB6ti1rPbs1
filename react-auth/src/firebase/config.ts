@@ -15,6 +15,7 @@ const FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
 const FIREBASE_STORAGE_BUCKET = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
 const FIREBASE_MESSAGING_SENDER_ID = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
 const FIREBASE_MEASUREMENT_ID = import.meta.env.VITE_MEASUREMENT_ID;
+const FIREBASE_RECAPTCHA_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 // --------------------------------------------
 // 🔹 Create Firebase Configuration Object
@@ -27,6 +28,7 @@ const firebaseConfig = {
   messagingSenderId: FIREBASE_MESSAGING_SENDER_ID, // Sender ID for Firebase Cloud Messaging
   appId: FIREBASE_APP_ID, // Firebase application ID
   measurementId: FIREBASE_MEASUREMENT_ID, // Optional: Used for analytics tracking
+  recaptchaKey: FIREBASE_RECAPTCHA_KEY,
 };
 
 // --------------------------------------------
